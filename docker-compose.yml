@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  backend:
+    build: .
+    container_name: rtwebsocket_container
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1

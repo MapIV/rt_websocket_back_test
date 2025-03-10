@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+websockets
+bson
+numpy
+git+https://github.com/MapIV/rt_websocket.git
