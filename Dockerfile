@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN apt -y update
 RUN apt -y install libopencv-dev
+RUN apt -y install ffmpeg
 
 # ソースコード（tests ディレクトリのみ）をコンテナにコピー
 COPY test/ test/
