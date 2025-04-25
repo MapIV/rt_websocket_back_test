@@ -5,7 +5,7 @@ services:
     build: .
     container_name: rtwebsocket_container
     ports:
-      - "8080:8080"
+      - "8888:8888"
     volumes:
       - .:/app
     environment:

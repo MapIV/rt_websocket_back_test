@@ -17,4 +17,4 @@ RUN apt -y install ffmpeg
 COPY test/ test/
 
 # サーバーの起動コマンド
-CMD ["python", "test/test_main.py"]
+CMD ["uvicorn", "test.test_main:app", "--host", "0.0.0.0", "--port", "8888", "--reload"]
