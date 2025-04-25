@@ -53,8 +53,8 @@ async def video_feed(video_path: str = Query(..., description="Path to the video
     return StreamingResponse(video_streamer(video_path),media_type="video/mp4")
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     
-    import uvicorn
+#     import uvicorn
     
-    uvicorn.run(app, host="0.0.0.0", port=8888)
+#     uvicorn.run(app, host="0.0.0.0", port=8888)
