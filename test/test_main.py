@@ -9,8 +9,6 @@ import base64
 import rtWebsocket
 import time
 
-# from aiortc import VideoStreamTrack, RTCPeerConnection, RTCSessionDescription
-# from aiortc.contrib.media import MediaPlayer, MediaRecorder
 app = FastAPI()
 
 # CORS 設定（必要に応じて）
@@ -36,45 +34,50 @@ async def read_root():
     return {"message": "Hello World!"}
 
                 # ウェブカメラのキャプチャを開始
-cap=""
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """シンプルなWebSocketエンドポイント"""
-    await websocket.accept()  # クライアントの接続を受け入れる
-    cap = cv2.VideoCapture(0)  # WebSocket セッションごとにカメラを開く
-            
-    try:
-        while True:
-            data_json = await websocket.receive_text()  # クライアントからのメッセージを受信
-            
-            data = json.loads(data_json)
-            topic = data.get("topic", "")
+import asyncio
+import json
+import time
+import cv2
+import base64
+from fastapi import WebSocket
 
-            # print(f"受信: {data}")  # 受信データを表示（ログ代わり）
 
-            if topic == "camera":
-                # cap = cv2.VideoCapture(0)  # WebSocket セッションごとにカメラを開く
-                ret, frame = cap.read()
-                if ret:
-                    # 画像を JPEG に変換して Base64 エンコード
-                    _, buffer = cv2.imencode(".jpg", frame)
-                    frame_base64 = base64.b64encode(buffer).decode("utf-8")
 
-                    # WebSocket で送信
-                    # print(frame_base64)
-              
-                    await websocket.send_text(json.dumps({"image": frame_base64}))
-                
-                else:
-                    break
-            if topic=="video":
-                video_url="/app/test/sample_sound_video/test.mp4"
-                print(f"video_url: {video_url}")
-                await websocket.send_text(json.dumps({"video_url": video_url}))
-            if topic=="diagnostics":
-                #testData
-                current_timestamp = int(time.time())
-                test_data={
+# グローバルにカメラインスタンスを保持（必要ならセッションごとに変更も可）
+# 各トピックごとの処理を関数に分離
+cap = cv2.VideoCapture(0)
+
+latest_frame = None
+
+def capture_thread():
+    global latest_frame
+    while True:
+        ret, frame = cap.read()
+        if ret:
+            latest_frame = frame
+
+# 起動時にこのスレッドを開始しておく
+import threading
+threading.Thread(target=capture_thread, daemon=True).start()
+
+async def handle_camera(websocket: WebSocket):
+    # ret, frame = get_latest_frame(cap)
+    # if ret:
+        _, buffer = cv2.imencode(".jpg", latest_frame)
+        frame_base64 = base64.b64encode(buffer).decode("utf-8")
+        await websocket.send_text(json.dumps({"image": frame_base64}))
+    # else:
+    #     await websocket.send_text(json.dumps({"error": "カメラ画像取得失敗"}))
+
+async def handle_video(websocket: WebSocket):
+    video_url = "/app/test/sample_sound_video/test.mp4"
+    # print(f"video_url: {video_url}")
+    await websocket.send_text(json.dumps({"video_url": video_url}))
+
+async def handle_diagnostics(websocket: WebSocket):
+    current_timestamp = int(time.time())
+
+    test_data={
                     "topic": "diagnostics",
                   #   "timestamp": "EPOCH",
                     "timestamp": current_timestamp,#test data
@@ -142,13 +145,63 @@ async def websocket_endpoint(websocket: WebSocket):
                       },
                     ]
                   }
-                await websocket.send_text(json.dumps(test_data))
+# from aiortc import VideoStreamTrack, RTCPeerConnection, RTCSessionDescription
+# from aiortc.contrib.media import MediaPlayer, MediaRecorder
+    await websocket.send_text(json.dumps(test_data))
+
+
+async def handle_events(websocket: WebSocket):
+  rows = [
+    { "id": 1, "date": "2/18", "time": "12:00", "event": "Battery", "location": "栄" },
+    { "id": 2, "date": "2/18", "time": "11:30", "event": "Arrival", "location": "伏見" },
+    { "id": 3, "date": "2/18", "time": "11:00", "event": "Manual Mode", "location": "名古屋" },
+    { "id": 4, "date": "2/18", "time": "10:30", "event": "Storage", "location": "池下" },
+    { "id": 5, "date": "2/18", "time": "10:00", "event": "Route", "location": "今池" },
+]
+
+  await websocket.send_text(json.dumps(rows))
+
+
+# トピックと関数のマッピング
+topic_handlers = {
+    "camera": handle_camera,
+    "video": handle_video,
+    "diagnostics": handle_diagnostics,
+    "events":handle_events,
+}
+
+# WebSocket エンドポイント
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+
+    try:
+        while True:
+            data_json = await websocket.receive_text()
+            data = json.loads(data_json)
+            topic = data.get("topic", "")
+            frequency_ms = data.get("frequency", 1000)  # デフォルトは1000ms
+            frequency_sec = frequency_ms / 1000  # ミリ秒を秒に変換
+            # print(f"topic: {topic}, frequency: {frequency_sec}秒")
+            handler = topic_handlers.get(topic)
+            if handler:
+                while True:
+                    await handler(websocket)
+                    await asyncio.sleep(frequency_sec)  # frequency_sec秒ごとにデータを送信
+            elif topic == "joystick":
+                # ジョイスティックのデータを受信
+                linear = data.get("linear", {})
+                angular = data.get("angular", {})
+                # ここでジョイスティックのデータを処理する
+                print(f"linear: {linear}, angular: {angular}")
+            else:
+                await websocket.send_text(json.dumps({"error": f"不明なトピック: {topic}"}))
+
     except Exception as e:
-      
-        print(f"WebSocket接続エラー: {e}")  # エラーが発生したら表示
+        print(f"WebSocket接続エラー: {e}")
     finally:
-        # cap.release()  # カメラリソースを解放
-        await websocket.close()  # WebSocket を閉じる
+        await websocket.close()
+        # cap.release()  # 使用後にカメラを解放する場合はこの行を有効にしてください
 
 
 # @app.websocket("/ws")
