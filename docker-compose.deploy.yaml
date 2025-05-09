@@ -1,10 +1,30 @@
 services:
   frontend:
-    image: nginx:stable-alpine
-    volumes:
-      - type: bind
-        source: ./test_client/test_frontend/vue/dist
-        target: /usr/share/nginx/html
+    image: robot-controller:frontend
+#    volumes:
+#      - type: bind
+#        source: /home/ubuntu/robot-controller.map4.jp/frontend/vue
+#        target: /vue
+    expose:
+      - "5173"
+    environment:
+      - VIRTUAL_PORT=5173
+      - VIRTUAL_HOST=robot-controller.map4.jp
+      - LETSENCRYPT_HOST=robot-controller.map4.jp
+      - LETSENCRYPT_EMAIL=abraham.monrroy@map4.jp
 
   backend:
     image: robot-controller:api
+    command: "uvicorn test.test_main:app --host 0.0.0.0 --port 80 --reload"
+    expose:
+      - "80"
+    environment:
+      - VIRTUAL_HOST=api.robot-controller.map4.jp
+      - LETSENCRYPT_HOST=api.robot-controller.map4.jp
+      - LETSENCRYPT_EMAIL=abraham.monrroy@map4.jp
+
+
+networks:
+    default:
+       external:
+         name: proxy
