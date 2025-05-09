@@ -9,15 +9,15 @@ export default function EmergencyStop() {
         sx={{
           width: {
             xs: "100vw",
-            lg: "50vw",
+            lg: "20vw",
           },
           height: {
             xs: "7vh",
-            lg: "15vh",
+            lg: "6vh",
           },
           fontSize: {
             xs: "2rem",
-            lg: "5rem",
+            lg: "2rem",
           },
 		  padding:{
 			xs: 2,

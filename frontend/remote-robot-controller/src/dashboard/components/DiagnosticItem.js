@@ -47,7 +47,8 @@ export default function DiagnosticItem({
         justifyContent: "center",
         border: "1px solid #ccc",
         flexDirection: "column",
-        width: `calc(90% / ${Math.ceil(total / 4)} )`,
+        height: "15%",
+        width: `calc(90% / ${Math.ceil(total / 5)} )`,
         padding: 0.5,
         backgroundColor: isStale ? "#f8d7da" : "#fff",
       }}

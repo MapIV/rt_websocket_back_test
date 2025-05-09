@@ -12,7 +12,11 @@ import {
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 
-export default function ModeChangeSwitch({ checked, modeSwitch }) {
+const mediaQuery = window.matchMedia("(max-width: 768px)");
+const Smartphone = mediaQuery.matches;
+console.log(Smartphone);
+
+export default function ModeChangeSwitch({ isManual, modeSwitch }) {
   const [open, setOpen] = useState(false);
 
   const handleClick = () => {
@@ -20,7 +24,7 @@ export default function ModeChangeSwitch({ checked, modeSwitch }) {
   };
 
   const handleConfirm = () => {
-    modeSwitch(!checked);
+    modeSwitch();
     setOpen(false);
   };
 
@@ -37,7 +41,7 @@ export default function ModeChangeSwitch({ checked, modeSwitch }) {
           justifyContent: "center",
           width: 62,
           height: 34,
-          backgroundColor: checked
+          backgroundColor: isManual
             ? theme.palette.warning.main
             : theme.palette.primary.main,
           borderRadius: "17px",
@@ -45,14 +49,13 @@ export default function ModeChangeSwitch({ checked, modeSwitch }) {
           cursor: "pointer",
           transition: "background-color 0.3s ease",
           position: "relative",
-          
         })}
         onClick={handleClick}
       >
         <Box
           sx={{
             position: "absolute",
-            left: checked ? "28px" : "4px",
+            left: isManual ? "28px" : "4px",
             transition: "left 0.3s ease",
           }}
         >
@@ -66,37 +69,40 @@ export default function ModeChangeSwitch({ checked, modeSwitch }) {
               },
             }}
           >
-            {checked ? <SportsEsportsIcon /> : <SmartToyIcon />}
+            {isManual ? <SportsEsportsIcon /> : <SmartToyIcon />}
           </IconButton>
         </Box>
       </Box>
 
       {/* ダイアログ */}
-      <Dialog open={open} onClose={handleCancel} sx={{
-          transform: checked ?"rotate(90deg)":"",
-          width: checked? "100vh":"100vw",
-          height: checked? "100vw":"100vh",
-          display:"flex",
-          justifyContent:"center",
-          alignItems:"center",
-          top:"50%",
-          left:"50%",
-          position:"absolute",
-          translate:"-50% -50%"
-        
-      }}>
+      <Dialog
+        open={open}
+        onClose={handleCancel}
+        sx={{
+          transform: Smartphone && isManual ? "rotate(90deg)" : "",
+          width: Smartphone && isManual ? "100vh" : "100vw",
+          height: Smartphone && isManual ? "100vw" : "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          top: "50%",
+          left: "50%",
+          position: "absolute",
+          translate: "-50% -50%",
+        }}
+      >
         <DialogTitle>モード切替の確認</DialogTitle>
         <DialogContent>
           <DialogContentText>
             本当にモードを
             <Box
               sx={(theme) => ({
-                color: checked
+                color: isManual
                   ? theme.palette.primary.main
                   : theme.palette.warning.main,
               })}
             >
-              {checked ? "AUTO" : "MANUAL"}
+              {isManual ? "AUTO" : "MANUAL"}
             </Box>
             に切り替えますか？
           </DialogContentText>
@@ -107,7 +113,7 @@ export default function ModeChangeSwitch({ checked, modeSwitch }) {
           </Button>
           <Button
             onClick={handleConfirm}
-            color={checked ? "primary" : "warning"}
+            color={isManual ? "primary" : "warning"}
             autoFocus
           >
             切り替える

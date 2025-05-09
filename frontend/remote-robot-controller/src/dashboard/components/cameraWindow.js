@@ -2,9 +2,9 @@ import { useEffect } from "react"
 import { initWebsocket } from "../api/websocket"
 import { Box } from "@mui/system"
 
-export default function CameraWindow({CardHeight}){
+export default function CameraWindow(){
     useEffect(()=>{
-        initWebsocket("camera","dammy")
+        initWebsocket("camera",0)
     },[])
     return(
         <Box
@@ -13,11 +13,8 @@ export default function CameraWindow({CardHeight}){
             alt="cameraImg"
             sx={{
                 width: "90%",
-                height: {
-                    xs:"100%",
-                    sm: 400,  // タブレットサイズ（sm: 600px以上）
-                    md: CardHeight,  // PCサイズ（md: 900px以上）
-                },
+                height:"90%",
+            
                 display: "block",
                 objectFit: "contain",
             }}

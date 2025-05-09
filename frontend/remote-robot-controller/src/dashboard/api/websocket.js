@@ -1,41 +1,40 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
 let ws_map = {};
-const MAPIV_IP="192.168.100.147"
-// const HOME_IP="192.168.0.11"
-export const initWebsocket = (topic, path) => {
+const MAPIV_IP="ws://192.168.100.158:8080/ws"
+export const initWebsocket = (topic, frequency) => {
   if (ws_map[topic]) return;
-  ws_map[topic] = new ReconnectingWebSocket(`ws://${MAPIV_IP}:8080/ws`);
+  ws_map[topic] = new ReconnectingWebSocket(MAPIV_IP);
 
   ws_map[topic].onopen = () => {
     console.log("WebSocket connected");
     
-    subscribe(topic, path);
-    // requestData(topic, path);
+    subscribe(topic, frequency);
   };
 
   ws_map[topic].onmessage = async (event) => {    
     try {
       const json = JSON.parse(event.data);
-      // console.log("Received JSON data:", json);
       
       switch (topic) {
 
         case "text":
-          await handleTextData(json, topic, path);
+          await handleTextData(json, topic, frequency);
           break;
 
         case "camera":
-          await handleCameraData(json, topic,path);
+          await handleCameraData(json, topic,frequency);
           break;
 
         case "diagnostics":
-          await handleDiagnosticsData(json, topic, path);
+          await handleDiagnosticsData(json, topic, frequency);
           break;
 
         case "video":
-          await handleVideoURLData(json, topic, path);
+          await handleVideoURLData(json, topic, frequency);
           break;
-
+        case "events":
+          await handleEvents(json, topic, frequency);
+          break;
         default:
           break;
       }
@@ -48,25 +47,23 @@ export const initWebsocket = (topic, path) => {
   ws_map[topic].onerror = (error) => console.error("WebSocket error:", error);
 };
 
-const subscribe = (topic, path) => {
-  ws_map[topic]?.send(JSON.stringify({ type: "subscribe", topic, path }));
+const subscribe = (topic, frequency) => {
+  ws_map[topic]?.send(JSON.stringify({ type: "subscribe", topic, "frequency":frequency }));
 };
 
-const requestData = (topic, path) => {
-  ws_map[topic]?.send(JSON.stringify({ type: "request_data", topic, path }));
+const requestData = (topic, frequency) => {
+  // ws_map[topic]?.send(JSON.stringify({ type: "request_data", topic, "frequency":frequency }));
 };
 
-async function handleTextData(json, topic, path) {
-  // console.log("Header:", json.header);
-  // console.log("Data:", json.data);
-  requestData(topic, path);
+async function handleTextData(json, topic, frequency) {
+  requestData(topic, frequency);
 }
 
-async function handleCameraData(json,topic,path) {
+async function handleCameraData(json,topic,frequency) {
   if (json.image&&document.getElementById("camera_feed")) {
     document.getElementById("camera_feed").src = `data:image/jpeg;base64,${json.image}`;
   }
-  requestData(topic, path);
+  requestData(topic, frequency);
 }
 
 let diagnosticsCallback = null;
@@ -98,7 +95,8 @@ const formatTimestamp=(epoch)=>{
     seconds
   };
 }
-async function handleDiagnosticsData(diagnostics,topic,path) {
+
+async function handleDiagnosticsData(diagnostics,topic,frequency) {
   
   const diagnosticsByName = {"names":[],"timestamp":{}};
   
@@ -118,7 +116,7 @@ async function handleDiagnosticsData(diagnostics,topic,path) {
   
   setDiagnosticsData(diagnosticsByName)
   
-  requestData(topic, path);
+  requestData(topic, frequency);
 }
 let videoUrlCallback = null;
 export function registerVideoUrlCallback(set) {
@@ -129,6 +127,23 @@ function setVideoUrl(value) {
     videoUrlCallback(value);
   }
 }
-async function handleVideoURLData(url,topic,path) {
+async function handleVideoURLData(url,topic,frequency) {  
   setVideoUrl(url["video_url"]);
+}
+
+let EventsCallback = null;
+export function registerEventsCallback(set) {
+  EventsCallback= set;
+}
+function setEvents(value) {
+  if (videoUrlCallback) {
+    EventsCallback(value);
+  }
+}
+async function handleEvents(rows,topic,frequency) {
+  setEvents(rows);
+}
+export function sendJoystickData(data) {
+  
+  ws_map["joystick"]?.send(JSON.stringify({ type: "send_data", topic:"joystick",linear:data.linear,angular:data.angular,"timestamp":data.timestamp}));
 }

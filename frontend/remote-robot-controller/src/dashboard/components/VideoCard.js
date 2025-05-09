@@ -7,21 +7,15 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import CameraWindow from "./cameraWindow";
 
-const mediaQuery = window.matchMedia("(max-width: 768px)");
-const Smartphone = mediaQuery.matches;
-const CardHeight = Smartphone ? 280 : 500;
-
-const TypographyHeight = 100; // タイトルの高さ（余白込み）
-const AdjustedCardHeight = CardHeight - TypographyHeight;
 
 export default function VideoCard() {
   return (
-    <Card sx={{ height: CardHeight, minWidth: { lg: 275 }, marginTop: {xs:0,lg: 2} }}>
-      <CardContent>
-        <Typography gutterBottom sx={{ color: "text.secondary", fontSize: 30 }}>
+    <Card sx={{ height:"100%" ,minWidth: { lg: 275 }}}>
+      <CardContent sx={{ height:"100%",display: "flex", justifyContent: "center", alignItems: "center" }}>
+        {/* <Typography gutterBottom sx={{ color: "text.secondary", fontSize: 30 }}>
           camera
-        </Typography>
-        <CameraWindow CardHeight={AdjustedCardHeight} />
+        </Typography> */}
+        <CameraWindow  />
       </CardContent>
     </Card>
   );

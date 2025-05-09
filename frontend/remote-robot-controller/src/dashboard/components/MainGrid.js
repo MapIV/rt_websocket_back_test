@@ -1,16 +1,11 @@
 import * as React from "react";
-import Grid from "@mui/material/Grid2";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-// import { Joystick } from "react-joystick-component";
 import VideoCard from "./VideoCard";
 import ThermalVideoCard from "./ThermalVideoCard";
 import MapCard from "./MapCard";
 import MiniEventList from "./MiniEventList";
 import EmergencyButton from "./EmergencyStop";
-import EventPageButton from "./EventPageButton";
-// import type { LatLngTuple } from 'leaflet'
-// import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import StatusCard from "./StatusCard";
 import { Button, Typography, useMediaQuery } from "@mui/material";
 import { useState } from "react";
@@ -21,66 +16,95 @@ import ModeChangeSwitch from "./ModeChangeSwitch";
 import { useTheme } from "@emotion/react";
 import ManualModeWindow from "./ManualModeWindow";
 
-const mediaQuery = window.matchMedia("(max-width: 768px)");
-const Smartphone = mediaQuery.matches;
-const TopMargin = Smartphone ? 1 : 5;
-// const position: LatLngTuple = [51.505, -0.09];
-
 export default function MainGrid() {
   const [ThermalCamera, SwitchCamera] = useState(false);
   const toggle = () => SwitchCamera(!ThermalCamera);
-  const [manual, setMode] = useState(false);
-  const modeSwitch = () => setMode((prev) => !prev);
+  const [isManual, setIsManual] = useState(false);
+  const modeSwitch = () => {
+
+    setIsManual((prev) => !prev);
+  }
 
   const [diagnosticsData, setdiagnosticsData] = React.useState(null);
+  const responsiveHeights = {
+    height: {
+      xs: "300px",
+      sm: "400px",
+      md:"500px",
+      lg: "500px",
+    },
+  };
 
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.only("xs"));
   React.useEffect(() => {
     registerDiagnosticsCallback(setdiagnosticsData);
-    initWebsocket("diagnostics", "dammy");
+    initWebsocket("diagnostics", 100);
   }, []);
-  return isXs && manual ? (
-    <Box sx={{userSelect:"none",overflow:"hidden"}}>
-      <ManualModeWindow checked={manual} modeSwitch={modeSwitch} diagnosticsData={diagnosticsData} />
+  return isXs && isManual ? (
+    <Box sx={{ userSelect: "none", overflow: "hidden" }}>
+      <ManualModeWindow
+        isManual={isManual}
+        modeSwitch={modeSwitch}
+        diagnosticsData={diagnosticsData}
+      />
     </Box>
   ) : (
     <Box
       sx={{
         width: "100%",
-        maxWidth: { sm: "100%", md: "1700px" },
         pt: { xs: 8, md: 0 },
+        overflowX: "hidden",
       }}
     >
-      <Grid
-        container
-        spacing={2}
-        columns={12}
+      <Box
         sx={{
-          mb: (theme) => theme.spacing(2),
-          mt: (theme) => theme.spacing(2),
+          display: "flex",
+          width: "100vw",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          alignItems: "center",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 2,
         }}
       >
-        <Grid size={{ xs: 2, lg: 4 }} display={{ xs: "block", sm: "none" }}>
-          <MobileStatusCard diagnosticsData={diagnosticsData} />
-        </Grid>
-
-        <Grid
-          size={{ xs: 10, sm: 12, lg: 4 }}
-          display={{ xs: ThermalCamera ? "none" : "block", sm: "block" }}
+        <Box
+          width={{ xs: "90%", sm: "45%", lg: "30%" }}
+          display={"flex"}
+          justifyContent={"center"}
+          alignItems={"center"}
+          gap={2}
+          sx={responsiveHeights}
         >
-          <VideoCard />
-        </Grid>
+          <Box
+            width={"10%"}
+            height={"100%"}
+            flexDirection={"column"}
+            justifyContent={"space-around"}
+            display={{ xs: "flex", sm: "none" }}
+          >
+            <MobileStatusCard diagnosticsData={diagnosticsData} />
+          </Box>
 
-        <Grid
-          size={{ xs: 10, sm: 12, lg: 4 }}
+          <Box
+            width={{ xs: "85%", sm: "100%" }}
+            height={"100%"}
+            display={{ xs: ThermalCamera ? "none" : "block", sm: "block" }}
+          >
+            <VideoCard />
+          </Box>
+        </Box>
+
+        <Box
+          width={{ xs: "85%", sm: "45%", lg: "30%" }}
+          sx={responsiveHeights}
           display={{ xs: ThermalCamera ? "block" : "none", sm: "block" }}
         >
           <ThermalVideoCard />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 4 }} display={{ xs: "block", sm: "none" }}>
-          <ModeChangeSwitch checked={manual} modeSwitch={modeSwitch} />
-        </Grid>
+        </Box>
+        <Box display={{ xs: "block", sm: "none" }}>
+          <ModeChangeSwitch isManual={isManual} modeSwitch={modeSwitch} />
+        </Box>
         <Box
           sx={{
             display: { xs: "flex", sm: "none" },
@@ -89,12 +113,7 @@ export default function MainGrid() {
             width: "100%",
           }}
         >
-          <Box size={{ xs: 4, lg: 4 }} display={{ xs: "block", sm: "none" }}>
-            <EventPageButton />
-          </Box>
-
-          <Box size={{ xs: 4, lg: 4 }} display={{ xs: "block", sm: "none" }}>
-            {/* <CameraChange ThermalCamera = 'Camera' /> */}
+          <Box display={{ xs: "block", sm: "none" }}>
             <Box sx={{ "& button": { m: 1 } }}>
               <Button
                 variant="outlined"
@@ -108,33 +127,32 @@ export default function MainGrid() {
           </Box>
         </Box>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Box
+          width={{ xs: "90%", sm: "45%", lg: "30%" }}
+          sx={responsiveHeights}
+        >
           <MapCard />
-          {/* <MapContainer center={position} zoom={13} scrollWheelZoom={false}>
-					<TileLayer
-						attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-						url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-					/>
-					<Marker position={position}>
-						<Popup>
-						A pretty CSS3 popup. <br />
-						</Popup>
-					</Marker>
-					</MapContainer> */}
-        </Grid>
-      </Grid>
-      <Grid container spacing={2} columns={12}>
-        <Grid size={{ xs: 6, lg: 4 }} display={{ xs: "none", sm: "block" }}>
+        </Box>
+       
+
+        <Box
+          width={{ xs: "100%", sm: "45%", lg: "30%" }}
+          display={{ xs: "none", sm: "block" }}
+          sx={responsiveHeights}
+        >
           {/* <CustomizedTreeView /> */}
           <StatusCard diagnosticsData={diagnosticsData} />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 4 }} display={{ xs: "none", sm: "block" }}>
-          <Stack width="100%" alignItems="center" sx={{ mt: TopMargin }}>
-            <ModeChangeSwitch checked={manual} modeSwitch={modeSwitch} />
-            <Box sx={{ mt: TopMargin }}>
-              <JoyStickWindow />
+        </Box>
+        <Box
+          width={{ xs: "100%", sm: "45%", lg: "30%" }}
+          display={{ xs: "none", sm: "block" }}
+        >
+          <Stack width="100%" alignItems="center" sx={{ mt: { xs: 1, lg: 5 } }}>
+            <ModeChangeSwitch isManual={isManual} modeSwitch={modeSwitch} />
+            <Box sx={{ mt: { xs: 1, lg: 5 } }}>
+              <JoyStickWindow isManual={isManual}/>
             </Box>
-            <Box sx={{ mt: TopMargin }}>
+            <Box sx={{ mt: { xs: 1, lg: 5 } }}>
               <Typography
                 sx={{
                   fontSize: 28,
@@ -144,49 +162,52 @@ export default function MainGrid() {
                 }}
               >
                 MODE :{" "}
-                <Box sx={{ color: manual ? "warning.main" : "primary.main" }}>
-                  {manual ? "MANUAL" : "AUTO"}
+                <Box sx={{ color: isManual ? "warning.main" : "primary.main" }}>
+                  {isManual ? "MANUAL" : "AUTO"}
                 </Box>
               </Typography>
             </Box>
           </Stack>
-        </Grid>
-        <Grid size={{ xs: 6, lg: 4 }} display={{ xs: "none", sm: "block" }}>
-          {/* <CustomizedDataGrid /> */}
+        </Box>
+        <Box
+          width={{ xs: "90%", sm: "45%", lg: "30%" }}
+          sx={responsiveHeights}
+          display={{ xs: "block", sm: "block" }}
+        >
+          {/* <CustomizedDataBox /> */}
           <MiniEventList />
-        </Grid>
-      </Grid>
-      <Box
-        sx={{
-          position: {
-            xs: "fixed",
-            lg: "relative",
-          },
-          top: {
-            xs: 0,
-          },
-          left: {
-            xs: 0,
-          },
-          zIndex: 100000000,
-        }}
-      >
-        <EmergencyButton />
-        <Typography
+        </Box>
+        <Box
           sx={{
-            fontSize: "1rem",
-            fontWeight: "bold",
-            justifyContent: "center",
-            display: { xs: "flex", sm: "none" },
+            position: {
+              xs: "fixed",
+              lg: "relative",
+            },
+            top: {
+              xs: 0,
+            },
+            left: {
+              xs: 0,
+            },
+            zIndex: 999,
           }}
         >
-          MODE :{" "}
-          <Box sx={{ color: manual ? "warning.main" : "primary.main" }}>
-            {manual ? "MANUAL" : "AUTO"}
-          </Box>
-        </Typography>
+          <EmergencyButton />
+          <Typography
+            sx={{
+              fontSize: "1rem",
+              fontWeight: "bold",
+              justifyContent: "center",
+              display: { xs: "flex", sm: "none" },
+            }}
+          >
+            MODE :{" "}
+            <Box sx={{ color: isManual ? "warning.main" : "primary.main" }}>
+              {isManual ? "MANUAL" : "AUTO"}
+            </Box>
+          </Typography>
+        </Box>
       </Box>
-      {/* <Copyright sx={{ my: 4 }} /> */}
     </Box>
   );
 }
