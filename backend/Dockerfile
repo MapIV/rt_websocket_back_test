@@ -22,4 +22,4 @@ COPY test/ test/
 
 USER user
 # サーバーの起動コマンド
-CMD ["uvicorn", "test.test_main:app", "--host", "0.0.0.0", "--port", "8888", "--reload"]
+CMD ["uvicorn", "test.test_main:app", "--host", "0.0.0.0", "--port", "80", "--reload"]
