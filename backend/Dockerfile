@@ -15,8 +15,17 @@ RUN pip install --upgrade pip && \
 
 RUN apt -y update && apt -y install libopencv-dev && apt -y install ffmpeg && rm -rf /var/lib/apt/lists/* -f
 
-RUN groupadd --gid 1000 user \
-    && useradd --uid 1000 --gid 1000 -m user
+# RUN groupadd --gid 1000 user \
+#     && useradd --uid 1000 --gid 1000 -m user
+
+# RUN getent group video || groupadd -r video \
+#     && useradd -m -s /bin/bash -u 1000 -G video user
+# videoグループがなければ作る
+RUN getent group video || groupadd -r video
+
+# userをvideoグループ付きで作成（1回だけ！）
+RUN useradd -m -s /bin/bash -u 1000 -G video user
+   
 # ソースコード（tests ディレクトリのみ）をコンテナにコピー
 COPY test/ test/
 

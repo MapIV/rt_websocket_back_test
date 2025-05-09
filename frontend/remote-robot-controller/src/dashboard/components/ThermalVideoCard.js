@@ -8,7 +8,7 @@ export default function ThermalVideoCard() {
   const [videoUrl, setVideoUrl] = React.useState(null);
   React.useEffect(() => {
     registerVideoUrlCallback(setVideoUrl);
-    initWebsocket("video", 0);
+    initWebsocket("thermal_camera", 0);
   }, []);
 
   return (
@@ -38,18 +38,30 @@ export default function ThermalVideoCard() {
           overflow: "hidden",
         }}
       >
-        <video controls autoPlay width="90%">
+        {/* <video controls autoPlay width="90%"> */}
           {/* {videoUrl && (
             <source
               src={`http://192.168.100.158:8080/video?video_path=${videoUrl}`}
               type="video/mp4"
             />
           )} */}
-          <source
+          {/* <source
             src={`http://192.168.100.158:8080/video?video_path=/app/test/sample_sound_video/test.mp4`}
             type="video/mp4"
-          />
-        </video>
+          /> */}
+        {/* </video> */}
+        <Box
+            component="img"
+            id="thermal_camera_feed"
+            alt="thermalCameraImg"
+            sx={{
+                width: "90%",
+                height:"90%",
+            
+                display: "block",
+                objectFit: "contain",
+            }}
+        />
       </Box>
     </Card>
   );

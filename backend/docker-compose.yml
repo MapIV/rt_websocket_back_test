@@ -10,3 +10,7 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+    devices:
+      - "/dev/video0:/dev/video0"
+      - "/dev/video1:/dev/video1"
+    privileged: true

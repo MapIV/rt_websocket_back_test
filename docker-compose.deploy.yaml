@@ -33,6 +33,11 @@ services:
       - VIRTUAL_HOST=api.robot-controller.map4.jp
       - LETSENCRYPT_HOST=api.robot-controller.map4.jp
       - LETSENCRYPT_EMAIL=abraham.monrroy@map4.jp
+      - PYTHONUNBUFFERED=1
+    devices:
+      - "/dev/video0:/dev/video0"
+      - "/dev/video1:/dev/video1"
+    privileged: true
 
 networks:
   proxy:

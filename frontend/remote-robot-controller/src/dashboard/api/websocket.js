@@ -1,9 +1,17 @@
 import ReconnectingWebSocket from "reconnecting-websocket";
 let ws_map = {};
-const MAPIV_IP="ws://192.168.100.158:8080/ws"
+const MAPIV_IP="ws://localhost:80/ws"
+let isProcessing = false;
 export const initWebsocket = (topic, frequency) => {
   if (ws_map[topic]) return;
-  ws_map[topic] = new ReconnectingWebSocket(MAPIV_IP);
+
+  if (topic === "thermal_camera") {
+    ws_map[topic] = new ReconnectingWebSocket(`${MAPIV_IP}/webcamera`);
+  } else if (topic === "camera"){
+    ws_map[topic] = new ReconnectingWebSocket(`${MAPIV_IP}/camera`);
+  } else {
+    ws_map[topic] = new ReconnectingWebSocket(MAPIV_IP);
+  }
 
   ws_map[topic].onopen = () => {
     console.log("WebSocket connected");
@@ -13,30 +21,29 @@ export const initWebsocket = (topic, frequency) => {
 
   ws_map[topic].onmessage = async (event) => {    
     try {
-      const json = JSON.parse(event.data);
-      
-      switch (topic) {
-
-        case "text":
-          await handleTextData(json, topic, frequency);
-          break;
-
-        case "camera":
-          await handleCameraData(json, topic,frequency);
-          break;
-
-        case "diagnostics":
-          await handleDiagnosticsData(json, topic, frequency);
-          break;
-
-        case "video":
-          await handleVideoURLData(json, topic, frequency);
-          break;
-        case "events":
-          await handleEvents(json, topic, frequency);
-          break;
-        default:
-          break;
+      if (topic === "camera") {
+        await handleCameraData(event, topic, frequency);
+      } else if (topic === "thermal_camera") {
+        await handleThermalCameraData(event, topic, frequency);
+      } else {
+        const json = JSON.parse(event.data);
+        switch (topic) {
+          case "text":
+            await handleTextData(json, topic, frequency);
+            break;
+          case "diagnostics":
+            await handleDiagnosticsData(json, topic, frequency);
+            break;
+          case "video":
+            await handleVideoURLData(json, topic, frequency);
+            break;
+          case "events":
+            await handleEvents(json, topic, frequency);
+            break;
+          default:
+            console.warn("Unhandled topic:", topic);
+            break;
+        }
       }
     } catch (e) {
       console.error("Error parsing message:", e);
@@ -48,23 +55,66 @@ export const initWebsocket = (topic, frequency) => {
 };
 
 const subscribe = (topic, frequency) => {
+  console.log("subscribing to topic:", topic);
   ws_map[topic]?.send(JSON.stringify({ type: "subscribe", topic, "frequency":frequency }));
 };
 
 const requestData = (topic, frequency) => {
-  // ws_map[topic]?.send(JSON.stringify({ type: "request_data", topic, "frequency":frequency }));
+  ws_map[topic]?.send(JSON.stringify({ type: "request_data", topic, "frequency":frequency }));
 };
 
 async function handleTextData(json, topic, frequency) {
   requestData(topic, frequency);
 }
 
-async function handleCameraData(json,topic,frequency) {
-  if (json.image&&document.getElementById("camera_feed")) {
-    document.getElementById("camera_feed").src = `data:image/jpeg;base64,${json.image}`;
+async function createObjectURL(data) {
+  const arrayBuffer = await data.arrayBuffer();
+
+  const headerLenBytes = arrayBuffer.slice(0, 4);
+  const headerLen = new DataView(
+  headerLenBytes instanceof ArrayBuffer ? headerLenBytes : headerLenBytes).getUint32(0, true);
+  
+  const headerBytes = arrayBuffer.slice(4, 4 + headerLen);
+  const headerText = new TextDecoder().decode(
+  headerBytes instanceof ArrayBuffer ? headerBytes : headerBytes);
+  const header = JSON.parse(headerText);
+
+  const frameBytes = await arrayBuffer.slice(4 + headerLen)
+  const mimeType = header.format === "png" ? "image/png" : "image/jpeg";
+  
+  const blob = new Blob([frameBytes], { type: mimeType });
+  return  URL.createObjectURL(blob);
+
+}
+
+async function handleCameraData(event,topic,frequency) {
+  if (event.data.byteLength === 0 || !(event.data instanceof Blob)) {
+    console.log("No data received or data is not a Blob");
+    return;
+  }
+
+  const objectUrl = await createObjectURL(event.data);
+  const imgEl = document.getElementById("camera_feed");
+  if (imgEl) {
+    imgEl.src = objectUrl;
   }
   requestData(topic, frequency);
 }
+
+async function handleThermalCameraData(event,topic,frequency) {
+  if (event.data.byteLength === 0 || !(event.data instanceof Blob) || isProcessing) {
+    return;
+  }
+  isProcessing = true;
+  const objectUrl = await createObjectURL(event.data);
+  const imgEl = document.getElementById("thermal_camera_feed");
+  if (imgEl) {
+    imgEl.src = objectUrl;
+  }
+  isProcessing = false;
+  requestData(topic, frequency);
+}
+
 
 let diagnosticsCallback = null;
 function setDiagnosticsData(value) {
