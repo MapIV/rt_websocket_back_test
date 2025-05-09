@@ -4,7 +4,8 @@ from rtWebsocket.middleware.timeout import TimeoutMiddleware
 from fastapi import FastAPI, Query, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import rtWebsocket
-
+# from aiortc import VideoStreamTrack, RTCPeerConnection, RTCSessionDescription
+# from aiortc.contrib.media import MediaPlayer, MediaRecorder
 app = FastAPI()
 
 # CORS 設定（必要に応じて）
@@ -18,6 +19,7 @@ app.add_middleware(
 app.add_middleware(TimeoutMiddleware, timeout=10)
 ws_manager = rtWebsocket.setup_manager()
 camera_manager = rtWebsocket.setup_manager()
+camera2_manager = rtWebsocket.setup_manager()   
 
 async def video_streamer(file_path: str, chunk_size: int = 1024 * 1024):
     """動画をチャンクごとにストリーミングする"""
@@ -43,6 +45,31 @@ async def camera_websocket(websocket: WebSocket):
     try:
         print("camera_websocket")
         await rtWebsocket.websocket_endpoint(websocket, camera_manager)
+    except Exception as e:
+        print(f"test_websocket error {e}")
+
+@app.websocket("/ws/webcamera/sender")
+async def camera_websocket_sender(websocket: WebSocket):
+    try:
+        print("camera_websocket")
+        await rtWebsocket.websocket_endpoint(websocket, camera_manager, is_sender=True)
+    except Exception as e:
+        print(f"test_websocket error {e}")
+
+
+@app.websocket("/ws/2/webcamera")
+async def camera_websocket2(websocket: WebSocket):
+    try:
+        print("camera_websocket")
+        await rtWebsocket.websocket_endpoint(websocket, camera2_manager)
+    except Exception as e:
+        print(f"test_websocket error {e}")
+
+@app.websocket("/ws/2/webcamera/sender")
+async def camera_websocket2_sender(websocket: WebSocket):
+    try:
+        print("camera_websocket")
+        await rtWebsocket.websocket_endpoint(websocket, camera2_manager, is_sender=True)
     except Exception as e:
         print(f"test_websocket error {e}")
 

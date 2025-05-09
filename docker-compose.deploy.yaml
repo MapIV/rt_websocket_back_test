@@ -1,0 +1,10 @@
+services:
+  frontend:
+    image: nginx:stable-alpine
+    volumes:
+      - type: bind
+        source: ./test_client/test_frontend/vue/dist
+        target: /usr/share/nginx/html
+
+  backend:
+    image: robot-controller:api
